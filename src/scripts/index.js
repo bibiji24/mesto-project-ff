@@ -1,6 +1,6 @@
 import { initialCards } from './cards';
 import { createCard, removeCard, likeCard } from './card';
-import { openModal, closeModal } from './modal';
+import { openModal, closeModal, addListenerToOverlay } from './modal';
 
 // @todo: DOM узлы
 const placesList = document.querySelector('.places__list');
@@ -17,13 +17,13 @@ const cardNameInput = newCardPopup.querySelector('.popup__input_type_card-name')
 const cardImageUrlInput = newCardPopup.querySelector('.popup__input_type_url');
 const formNewCard = newCardPopup.querySelector('.popup__form');
 const imagePopup = document.querySelector('.popup_type_image');
-
+const popupCloseButtons = document.querySelectorAll('.popup__close');
+const overlays = document.querySelectorAll('.popup');
 
 // @todo: Вывести карточки на страницу
 initialCards.forEach(item => {
     placesList.append(createCard(item.name, item.link, removeCard, likeCard, handleClickCardImage));
 });
-
 
 // обрбаботчик нажатия кнопки редактирования профиля
 function handleClickProfileEditBtn() {
@@ -63,6 +63,12 @@ function handleClickCardImage(name, link) {
     imagePopupCaption.textContent = name;
 }
 
+// функция добавляющая слушатель событий элементу из списка кнопок закрытия модальных окон
+function addListenerToCloseBtn(item) {
+    const popup = item.closest('.popup');
+    item.addEventListener('click', () => closeModal(popup));
+}
+
 // открытие модального окна с формой изменения профиля
 profileEditButton.addEventListener('click', handleClickProfileEditBtn);
 
@@ -75,6 +81,11 @@ placeAddButton.addEventListener('click', handleClickNewPlaceBtn);
 // добавление новой карточки
 formNewCard.addEventListener('submit', handleSendNewPlaceBtn)
 
+// закрытие модального окна нажатием крестика
+popupCloseButtons.forEach(addListenerToCloseBtn);
+
+// закрытие любого модального окна нажатием оверлея
+overlays.forEach(addListenerToOverlay);
 
 
   
