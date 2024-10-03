@@ -49,6 +49,10 @@ const newAvatarPopup = document.querySelector('.popup_type_new-avatar');
 const formNewAvatar = newAvatarPopup.querySelector('.popup__form');
 const newAvatarUrlInput = newAvatarPopup.querySelector('.popup__input_type_avatar-link');
 
+// попап подтверждения удаления
+const confirmPopup = document.querySelector('.popup_type_confirm');
+const confirmButton = confirmPopup.querySelector('.popup__button');
+
 // общие элементы для всех попапов
 const popupCloseButtons = document.querySelectorAll('.popup__close');
 const overlays = document.querySelectorAll('.popup');
@@ -62,12 +66,21 @@ function updateUserInfo(data) {
   avatar.setAttribute('style', `background-image: url(${data.avatar});`)
 }
 
+// функция изменения надписи на кнопке во время загрузки данных с сервера или на сервер
 function changeButtonWaitingState(buttonElement) {
   if (buttonElement.textContent === 'Сохранить') {
     buttonElement.textContent = 'Сохранение...'
   } else {
     buttonElement.textContent = 'Сохранить'
   }
+}
+
+function handleClickCardDeleteButton(card, cardId) {
+  openModal(confirmPopup);
+  confirmButton.addEventListener('click', () => {
+    deleteCard(card, cardId)
+    .finally(() => closeModal(confirmPopup));
+  });
 }
 
 // обрбаботчик нажатия кнопки редактирования профиля
@@ -117,7 +130,7 @@ function handleSendNewPlaceBtn(evt) {
     }
     changeButtonWaitingState(evt.target.querySelector('button'));
     sendNewCard(newData).then(data => {
-      const card = createCard(data, data.owner._id, deleteCard, likeCard, handleClickCardImage);
+      const card = createCard(data, data.owner._id, handleClickCardDeleteButton, likeCard, handleClickCardImage);
       placesList.prepend(card);
     })
     .catch(handleError)
@@ -145,9 +158,9 @@ function likeCard(likeButton, likeCountsElement, cardId) {
 
 // обработчик удаления карточки с удалением карточки на сервере
 function deleteCard(card, cardID) {
-  sendDeleteCardRequest(cardID).then(() => {
+  return sendDeleteCardRequest(cardID).then(() => {
     removeCard(card);
-  })
+  }).catch(handleError);
 }
 
 
@@ -184,7 +197,7 @@ function addListenerToCloseBtn(item) {
 Promise.all([takeUserInfo(), takeNewCards()]).then((res) => {
   updateUserInfo(res[0]);
   res[1].forEach(item => {
-    placesList.append(createCard(item, res[0]._id, deleteCard, likeCard, handleClickCardImage));
+    placesList.append(createCard(item, res[0]._id, handleClickCardDeleteButton, likeCard, handleClickCardImage));
   })
 }).catch(handleError);
 
