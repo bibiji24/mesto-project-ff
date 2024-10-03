@@ -1,7 +1,7 @@
-// @todo: Темплейт карточки
+// Темплейт карточки
 const cardTemplate = document.querySelector('#card-template').content;
 
-// @todo: Функция создания карточки
+// Функция создания карточки
 
 export function createCard(data, userId, deleteCard, like, handlerClickCardImage) {
   const { name, link } = data;

@@ -16,7 +16,7 @@ const validationConfig = {
 }
 
 
-// @todo: DOM узлы
+// DOM узлы
 // контейнер для карточек
 const placesList = document.querySelector('.places__list');
 
