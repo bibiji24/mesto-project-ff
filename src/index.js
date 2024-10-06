@@ -87,9 +87,7 @@ let handleConfirmButtonClick;
 function handleClickCardDeleteButton(card, cardId) {
   openModal(confirmPopup)
   handleConfirmButtonClick = () => {
-    deleteCard(card, cardId).then(() => {      
-      closeModal(confirmPopup);
-    });
+    deleteCard(card, cardId)
   }
 }
 
@@ -175,6 +173,8 @@ function deleteCard(card, cardId) {
   return sendDeleteCardRequest(cardId)
   .then(() => {
     removeCard(card);
+  }).then(() => {      
+    closeModal(confirmPopup);
   }).catch(handleError);
 }
 
