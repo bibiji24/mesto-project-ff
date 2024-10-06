@@ -170,7 +170,7 @@ function likeCard(likeButton, likeCountsElement, cardId) {
 
 // обработчик удаления карточки с удалением карточки на сервере
 function deleteCard(card, cardId) {
-  return sendDeleteCardRequest(cardId)
+  sendDeleteCardRequest(cardId)
   .then(() => {
     removeCard(card);
   }).then(() => {      
