@@ -1,9 +1,5 @@
-// Темплейт карточки
-const cardTemplate = document.querySelector('#card-template').content;
-
-// Функция создания карточки
-
 export function createCard(data, userId, deleteCard, like, handlerClickCardImage) {
+  const cardTemplate = document.querySelector('#card-template').content;
   const { name, link } = data;
   const card = cardTemplate.querySelector('.card').cloneNode(true);
   const cardImage = card.querySelector('.card__image');
@@ -11,16 +7,17 @@ export function createCard(data, userId, deleteCard, like, handlerClickCardImage
   const deleteButton = card.querySelector('.card__delete-button');
   const likeButton = card.querySelector('.card__like-button');
   const likeCounts = card.querySelector('.card__like-counts');
+  card.setAttribute('data-card-id', data._id);
   cardImage.setAttribute('src', link);
   cardImage.setAttribute('alt', name);
   cardTitle.textContent = name;
   if (data.owner._id === userId) {
-    deleteButton.addEventListener('click', (evt) => {
-      deleteCard(card, data._id);
+    deleteButton.setAttribute('data-card-id', data._id);
+    deleteButton.addEventListener('click', evt => {
+      deleteCard(data._id)
     });
   } else {
-    deleteButton.disabled = true;
-    deleteButton.classList.add('card__delete-button_is-hidden');
+    deleteButton.remove();
   }
   if (cardHasLike(userId, data.likes)) {
     handleClickLike(likeButton, likeCounts, data.likes.length);

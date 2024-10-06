@@ -76,7 +76,8 @@ export function clearValidatioin(formElement, validationConfig) {
     const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
     const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
     inputList.forEach(inputElement => {
-        hideError(formElement, inputElement, validationConfig);
-        changeButtonState(inputList, buttonElement, validationConfig)
+			checkInputValid(formElement, inputElement, validationConfig);
+			hideError(formElement, inputElement, validationConfig);
+			changeButtonState(inputList, buttonElement, validationConfig)
     })
 }

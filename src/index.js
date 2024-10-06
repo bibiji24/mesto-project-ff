@@ -1,10 +1,9 @@
 import './pages/index.css'; // добавьте импорт главного файла стилей
 
-import { initialCards } from './scripts/cards';
-import { createCard, removeCard, handleClickLike } from './scripts/card';
+import { createCard, handleClickLike, removeCard } from './scripts/card';
 import { openModal, closeModal, addListenerToOverlay } from './scripts/modal';
 import { clearValidatioin, enableValidation } from './scripts/validation';
-import { handleError, sendDeleteCardRequest, sendLike, sendNewCard, takeNewCards, takeUserInfo, updateUserData } from './scripts/api';
+import { sendDeleteCardRequest, sendLike, sendNewCard, takeNewCards, takeUserInfo, updateUserData } from './scripts/api';
 
 const validationConfig = {
     formSelector: '.popup__form',
@@ -43,6 +42,8 @@ const formNewCard = newCardPopup.querySelector('.popup__form');
 
 // попап отображения картинки
 const imagePopup = document.querySelector('.popup_type_image');
+const imagePopupImage = imagePopup.querySelector('.popup__image');
+const imagePopupCaption = imagePopup.querySelector('.popup__caption');
 
 // попап ввода данных новой аватарки
 const newAvatarPopup = document.querySelector('.popup_type_new-avatar');
@@ -52,6 +53,7 @@ const newAvatarUrlInput = newAvatarPopup.querySelector('.popup__input_type_avata
 // попап подтверждения удаления
 const confirmPopup = document.querySelector('.popup_type_confirm');
 const confirmButton = confirmPopup.querySelector('.popup__button');
+const confirmPopupCloseButton = confirmPopup.querySelector('.popup__close');
 
 // общие элементы для всех попапов
 const popupCloseButtons = document.querySelectorAll('.popup__close');
@@ -75,12 +77,38 @@ function changeButtonWaitingState(buttonElement) {
   }
 }
 
-function handleClickCardDeleteButton(card, cardId) {
-  openModal(confirmPopup);
-  confirmButton.addEventListener('click', () => {
-    deleteCard(card, cardId)
-    .finally(() => closeModal(confirmPopup));
+// обработка ошибки при запросе на сервер
+function handleError(err) {
+	console.log(`Error: ${err}`);
+}
+
+
+// поиск карточки на странице по ID
+function findCard(cardId) {
+  const cardsList = Array.from(placesList.querySelectorAll('.card'));
+  return cardsList.find(card => {
+    return card.dataset.cardId === cardId
   });
+}
+
+// обработчик нажатия кнопки подтверждения. 
+// Получает ID карточки из дата атрибута кнопки, вывавшей событие
+function confirm(evt) {
+  const cardId = evt.target.dataset.cardId;
+  const card = findCard(cardId);
+  deleteCard(card, cardId).then(() => {
+    closeModal(confirmPopup);
+  })
+}
+
+confirmButton.addEventListener('click', confirm);
+
+
+// обработчик нажатия на кнопку удаления карточки. 
+// Навешивает на кнопку дата атрибут с ID карточки
+function handleClickCardDeleteButton(cardId) {
+  openModal(confirmPopup)
+  confirmButton.setAttribute('data-card-id', cardId);
 }
 
 // обрбаботчик нажатия кнопки редактирования профиля
@@ -113,11 +141,13 @@ function handleProfileFormSubmit(evt) {
     }
     changeButtonWaitingState(evt.target.querySelector('button'));
     updateUserData(newData, false)
-    .then(updateUserInfo)
+    .then((data) => {
+      updateUserInfo(data)
+      closeModal(profilePopup)
+    })
     .catch(handleError)
     .finally(() => {
       changeButtonWaitingState(evt.target.querySelector('button'))
-      closeModal(profilePopup)
     })
 }
 
@@ -132,12 +162,12 @@ function handleSendNewPlaceBtn(evt) {
     sendNewCard(newData).then(data => {
       const card = createCard(data, data.owner._id, handleClickCardDeleteButton, likeCard, handleClickCardImage);
       placesList.prepend(card);
+      closeModal(newCardPopup)
+      formNewCard.reset();
     })
     .catch(handleError)
     .finally(() => {
       changeButtonWaitingState(evt.target.querySelector('button'))
-      closeModal(newCardPopup)
-      formNewCard.reset();
     })
 }
 
@@ -157,8 +187,9 @@ function likeCard(likeButton, likeCountsElement, cardId) {
 }
 
 // обработчик удаления карточки с удалением карточки на сервере
-function deleteCard(card, cardID) {
-  return sendDeleteCardRequest(cardID).then(() => {
+function deleteCard(card, cardId) {
+  return sendDeleteCardRequest(cardId)
+  .then(() => {
     removeCard(card);
   }).catch(handleError);
 }
@@ -166,38 +197,39 @@ function deleteCard(card, cardID) {
 
 // обработчик клика по картинке карточки (открытие попапа)
 function handleClickCardImage(name, link) {
-    openModal(imagePopup);
-    const imagePopupImage = imagePopup.querySelector('.popup__image');
-    const imagePopupCaption = imagePopup.querySelector('.popup__caption');
-    imagePopupImage.setAttribute('src', link);
-    imagePopupCaption.textContent = name;
+  openModal(imagePopup);
+  imagePopupImage.setAttribute('src', link);
+  imagePopupImage.setAttribute('alt', name);
+  imagePopupCaption.textContent = name;
 }
 
 // обработчик отправки нового аватара
 function submitNewAvatar(evt) {
-    evt.preventDefault();
-    const newData = {avatar: newAvatarUrlInput.value};
-    changeButtonWaitingState(evt.target.querySelector('button'));
-    updateUserData(newData, true)
-    .then(updateUserInfo)
-    .catch(handleError)
-    .finally(() => {
-      changeButtonWaitingState(evt.target.querySelector('button'))
-      closeModal(newAvatarPopup);
-    })
+  evt.preventDefault();
+  const newData = {avatar: newAvatarUrlInput.value};
+  changeButtonWaitingState(evt.target.querySelector('button'));
+  updateUserData(newData, true)
+  .then(data => {
+    updateUserInfo(data);
+    closeModal(newAvatarPopup);
+  })
+  .catch(handleError)
+  .finally(() => {
+    changeButtonWaitingState(evt.target.querySelector('button'))
+  })
 }
 
 // функция добавляющая слушатель событий элементу из списка кнопок закрытия модальных окон
 function addListenerToCloseBtn(item) {
-    const popup = item.closest('.popup');
-    item.addEventListener('click', () => closeModal(popup));
+  const popup = item.closest('.popup');
+  item.addEventListener('click', () => closeModal(popup));
 }
 
 // загрузка и отрисовка данных пользователя и новых карточек на странице
-Promise.all([takeUserInfo(), takeNewCards()]).then((res) => {
-  updateUserInfo(res[0]);
-  res[1].forEach(item => {
-    placesList.append(createCard(item, res[0]._id, handleClickCardDeleteButton, likeCard, handleClickCardImage));
+Promise.all([takeUserInfo(), takeNewCards()]).then(([userData, cardsArray]) => {
+  updateUserInfo(userData);
+  cardsArray.forEach(item => {
+    placesList.append(createCard(item, userData._id, handleClickCardDeleteButton, likeCard, handleClickCardImage));
   })
 }).catch(handleError);
 
