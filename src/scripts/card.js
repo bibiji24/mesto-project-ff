@@ -14,7 +14,7 @@ export function createCard(data, userId, deleteCard, like, handlerClickCardImage
   if (data.owner._id === userId) {
     deleteButton.setAttribute('data-card-id', data._id);
     deleteButton.addEventListener('click', evt => {
-      deleteCard(data._id)
+      deleteCard(card, data._id)
     });
   } else {
     deleteButton.remove();
@@ -42,4 +42,8 @@ function cardHasLike(userId, likes) {
   return likes.some(item => {
     return item._id === userId
   })
+}
+
+export function cardIsLiked(likeButton) {
+  return likeButton.classList.contains('card__like-button_is-active');
 }

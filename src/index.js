@@ -1,6 +1,6 @@
 import './pages/index.css'; // добавьте импорт главного файла стилей
 
-import { createCard, handleClickLike, removeCard } from './scripts/card';
+import { cardIsLiked, createCard, handleClickLike, removeCard } from './scripts/card';
 import { openModal, closeModal, addListenerToOverlay } from './scripts/modal';
 import { clearValidatioin, enableValidation } from './scripts/validation';
 import { sendDeleteCardRequest, sendLike, sendNewCard, takeNewCards, takeUserInfo, updateUserData } from './scripts/api';
@@ -53,12 +53,10 @@ const newAvatarUrlInput = newAvatarPopup.querySelector('.popup__input_type_avata
 // попап подтверждения удаления
 const confirmPopup = document.querySelector('.popup_type_confirm');
 const confirmButton = confirmPopup.querySelector('.popup__button');
-const confirmPopupCloseButton = confirmPopup.querySelector('.popup__close');
 
 // общие элементы для всех попапов
 const popupCloseButtons = document.querySelectorAll('.popup__close');
 const overlays = document.querySelectorAll('.popup');
-
 
 
 // функция вставки данных о поользователе
@@ -82,34 +80,20 @@ function handleError(err) {
 	console.log(`Error: ${err}`);
 }
 
-
-// поиск карточки на странице по ID
-function findCard(cardId) {
-  const cardsList = Array.from(placesList.querySelectorAll('.card'));
-  return cardsList.find(card => {
-    return card.dataset.cardId === cardId
-  });
-}
-
-// обработчик нажатия кнопки подтверждения. 
-// Получает ID карточки из дата атрибута кнопки, вывавшей событие
-function confirm(evt) {
-  const cardId = evt.target.dataset.cardId;
-  const card = findCard(cardId);
-  deleteCard(card, cardId).then(() => {
-    closeModal(confirmPopup);
-  })
-}
-
-confirmButton.addEventListener('click', confirm);
-
+// обработчик нажатия кнопки подтверждения.
+let handleConfirmButtonClick;
 
 // обработчик нажатия на кнопку удаления карточки. 
-// Навешивает на кнопку дата атрибут с ID карточки
-function handleClickCardDeleteButton(cardId) {
+function handleClickCardDeleteButton(card, cardId) {
   openModal(confirmPopup)
-  confirmButton.setAttribute('data-card-id', cardId);
+  handleConfirmButtonClick = () => {
+    deleteCard(card, cardId).then(() => {      
+      closeModal(confirmPopup);
+    });
+  }
 }
+
+confirmButton.addEventListener('click', () => handleConfirmButtonClick());
 
 // обрбаботчик нажатия кнопки редактирования профиля
 function handleClickProfileEditBtn() {
@@ -175,7 +159,7 @@ function handleSendNewPlaceBtn(evt) {
 
 // функция обработки лайка
 function likeCard(likeButton, likeCountsElement, cardId) {
-  if (likeButton.classList.contains('card__like-button_is-active')) {
+  if (cardIsLiked(likeButton)) {
     sendLike(cardId, 'DELETE').then(card => {
       handleClickLike(likeButton, likeCountsElement, card.likes.length);
     }).catch(handleError);
